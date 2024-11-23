@@ -11,20 +11,17 @@ export const setupStorage = () => {
      * Collects all column and task data from the DOM
      */
     const saveBoard = () => {
-        // Get all columns and map them to a data structure
         const columns = Array.from(document.querySelectorAll('.column')).map(column => {
             return {
                 title: column.querySelector('.column-title').textContent,
-                // Map all tasks in the column
                 tasks: Array.from(column.querySelectorAll('.task-card')).map(task => ({
                     id: task.dataset.taskId,
                     title: task.querySelector('.task-title').textContent,
-                    description: task.dataset.description || ''
+                    description: task.querySelector('.task-description').innerHTML // Use innerHTML instead of dataset
                 }))
             };
         });
 
-        // Save to localStorage
         localStorage.setItem(storageKey, JSON.stringify(columns));
     };
 

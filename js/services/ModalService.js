@@ -11,9 +11,10 @@ export const setupModal = () => {
      * @param {string} config.title - Modal title
      * @param {string|HTMLElement} config.content - Modal content
      * @param {Object} config.buttons - Modal action buttons
+     * @param {Function} config.onShow - Callback after modal is shown
      * @returns {HTMLElement} Modal element
      */
-    const createModal = ({ title, content, buttons = {} }) => {
+    const createModal = ({ title, content, buttons = {}, onShow }) => {
         const modal = document.createElement('div');
         modal.className = 'modal';
 
@@ -42,9 +43,13 @@ export const setupModal = () => {
         Object.entries(buttons).forEach(([label, callback]) => {
             const button = document.createElement('button');
             button.className = 'btn';
+            // Add primary style to first button
+            if (label === Object.keys(buttons)[0]) {
+                button.classList.add('btn-primary');
+            }
             button.textContent = label;
             button.addEventListener('click', () => {
-                callback();
+                if (callback) callback();
                 closeModal(modal);
             });
             modalFooter.appendChild(button);
@@ -55,6 +60,12 @@ export const setupModal = () => {
         closeBtn.addEventListener('click', () => closeModal(modal));
 
         modal.appendChild(modalContent);
+
+        // Call onShow callback after a short delay to ensure DOM is ready
+        if (onShow) {
+            setTimeout(() => onShow(modal), 0);
+        }
+
         return modal;
     };
 
@@ -82,6 +93,19 @@ export const setupModal = () => {
                 closeModal(modal);
             }
         });
+
+        // Add keyboard support (ESC to close)
+        const handleKeyPress = (e) => {
+            if (e.key === 'Escape') {
+                closeModal(modal);
+            }
+        };
+        document.addEventListener('keydown', handleKeyPress);
+
+        // Clean up event listener when modal closes
+        modal.addEventListener('close', () => {
+            document.removeEventListener('keydown', handleKeyPress);
+        });
     };
 
     /**
@@ -89,6 +113,16 @@ export const setupModal = () => {
      * @param {HTMLElement} modal - Modal element to close
      */
     const closeModal = (modal) => {
+        // Get Quill instance if it exists
+        const quillEditor = modal.querySelector('.ql-editor');
+        if (quillEditor) {
+            // Clean up Quill instance to prevent memory leaks
+            const quill = modal.quill;
+            if (quill) {
+                quill = null;
+            }
+        }
+
         modal.classList.remove('show');
         setTimeout(() => {
             modal.remove();

@@ -1,8 +1,13 @@
+import {setupRichTextEditor} from '../services/RichTextService.js';
+
 /**
  * Creates a new column element with all necessary functionality
  * @param {Object} config - Column configuration object
  */
-export const createColumn = ({ title, tasks = [], onDelete, onUpdate, modal }) => {
+export const createColumn = ({title, tasks = [], onDelete, onUpdate, modal}) => {
+
+    const richTextEditor = setupRichTextEditor();
+
     /**
      * Creates HTML for a task card
      * @param {Object} task - Task data
@@ -14,40 +19,122 @@ export const createColumn = ({ title, tasks = [], onDelete, onUpdate, modal }) =
         taskElement.dataset.taskId = task.id;
         taskElement.innerHTML = `
             <div class="task-title">${task.title}</div>
+            <div class="task-description">${task.description || ''}</div>
         `;
+
+        // Click handler for editing
+        taskElement.addEventListener('click', (e) => {
+            // Don't open editor if dragging
+            if (!e.target.closest('.task-handle')) {
+                showTaskDetails(task, taskElement);
+            }
+        });
+
         return taskElement;
     };
 
     /**
-     * Handles adding a new task to the column
+     * Shows task details modal with rich text editor
      */
-    const addTask = (columnElement) => {
+    const showTaskDetails = (task, taskElement) => {
+        const content = document.createElement('div');
+        content.innerHTML = `
+            <div class="form-group">
+                <label for="taskTitle">Title</label>
+                <input type="text" id="taskTitle" class="form-control" value="${task.title}">
+            </div>
+            <div class="form-group">
+                <label for="taskDescription">Description</label>
+                <div id="taskDescription" class="task-editor"></div>
+            </div>
+        `;
+
+        let editorInstance = null;
+
         modal.showModal({
-            title: 'Add New Task',
-            content: `
-                <div class="form-group">
-                    <label for="taskTitle">Task Title</label>
-                    <input type="text" id="taskTitle" class="form-control">
-                </div>
-            `,
+            title: 'Task Details',
+            content: content,
             buttons: {
-                'Add': () => {
-                    const taskTitle = document.getElementById('taskTitle').value.trim();
+                'Save': () => {
+                    const newTitle = document.getElementById('taskTitle').value.trim();
+                    // Get formatted content from editor
+                    const newDescription = editorInstance ?
+                        editorInstance.quill.root.innerHTML : '';
+
+                    if (newTitle) {
+                        // Update task data
+                        task.title = newTitle;
+                        task.description = newDescription;
+
+                        // Update DOM
+                        taskElement.querySelector('.task-title').textContent = newTitle;
+                        taskElement.querySelector('.task-description').innerHTML = newDescription;
+
+                        onUpdate();
+                    }
+                },
+                'Cancel': () => {
+                }
+            },
+
+            onShow: (modalElement) => {
+                editorInstance = richTextEditor.createEditor(
+                    modalElement.querySelector('#taskDescription'),
+                    task.description || ''
+                );
+            }
+        });
+    };
+
+    /**
+     * Handles adding a new task
+     */
+    const addTask = () => {
+        const content = document.createElement('div');
+        content.innerHTML = `
+            <div class="form-group">
+                <label for="newTaskTitle">Title</label>
+                <input type="text" id="newTaskTitle" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="newTaskDescription">Description</label>
+                <div id="newTaskDescription" class="task-editor"></div>
+            </div>
+        `;
+
+        let editorInstance = null;
+
+        modal.showModal({
+            title: 'Create New Task',
+            content: content,
+            buttons: {
+                'Create': () => {
+                    const taskTitle = document.getElementById('newTaskTitle').value.trim();
+                    const description = editorInstance ?
+                        editorInstance.quill.root.innerHTML : '';
+
                     if (taskTitle) {
                         const task = {
                             id: Date.now().toString(),
                             title: taskTitle,
-                            description: ''
+                            description: description
                         };
 
                         const taskElement = createTaskCard(task);
-                        const columnContent = columnElement.querySelector('.column-content');
+                        const columnContent = column.querySelector('.column-content');
                         columnContent.insertBefore(taskElement, columnContent.lastElementChild);
+
                         tasks.push(task);
                         onUpdate();
                     }
                 },
-                'Cancel': () => {}
+                'Cancel': () => {
+                }
+            },
+            onShow: (modalElement) => {
+                editorInstance = richTextEditor.createEditor(
+                    modalElement.querySelector('#newTaskDescription')
+                );
             }
         });
     };
@@ -99,7 +186,8 @@ export const createColumn = ({ title, tasks = [], onDelete, onUpdate, modal }) =
                         column.remove();
                         onDelete();
                     },
-                    'Cancel': () => {}
+                    'Cancel': () => {
+                    }
                 }
             });
         });
