@@ -50,6 +50,34 @@ export const setupUserService = (storage) => {
     };
 
     /**
+     * Creates a new user
+     */
+
+    const createUser = ({ name, email, password }) => {
+        if (!name || !email || !password) {
+            throw new Error('All fields are required');
+        }
+
+        if (users.some(u => u.email === email)) {
+            throw new Error('Email already exists');
+        }
+
+        const newUser = {
+            id: Date.now().toString(),
+            name,
+            email,
+            password,
+            role: 'user',
+            createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        storage.saveUsers(users);
+        return newUser;
+    };
+
+
+    /**
      * Authenticate user
      */
     const login = (email, password) => {
@@ -89,6 +117,7 @@ export const setupUserService = (storage) => {
     initialize();
 
     return {
+        createUser,
         login,
         logout,
         getCurrentUser,

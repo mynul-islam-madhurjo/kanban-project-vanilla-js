@@ -97,6 +97,7 @@ const initializeBoard = () => {
     const updateUserUI = () => {
         const currentUserDiv = document.getElementById('currentUser');
         const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
         const user = state.userService.getCurrentUser();
 
         if (user) {
@@ -106,45 +107,120 @@ const initializeBoard = () => {
                 ${user.role === 'admin' ? '<span class="badge">Admin</span>' : ''}
             </div>
         `;
-            // Replace login button with logout button if it exists
-            if (loginBtn) {
+            // Replace login/register buttons with logout button
+            if (loginBtn && registerBtn) {
                 const logoutBtn = document.createElement('button');
-                logoutBtn.id = 'logoutBtn'; // Add ID for reference
+                logoutBtn.id = 'logoutBtn';
                 logoutBtn.className = 'btn btn-outline-danger';
                 logoutBtn.textContent = 'Logout';
-                logoutBtn.onclick = () => { // Add click handler directly
+                logoutBtn.onclick = () => {
                     state.userService.logout();
                     updateUserUI();
                 };
+                loginBtn.parentNode.removeChild(registerBtn);
                 loginBtn.parentNode.replaceChild(logoutBtn, loginBtn);
             }
         } else {
             currentUserDiv.innerHTML = 'Not logged in';
-            // Replace logout button with login button if it exists
+            // Restore login and register buttons
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) {
-                const loginBtn = document.createElement('button');
-                loginBtn.id = 'loginBtn';
-                loginBtn.className = 'btn btn-primary';
-                loginBtn.textContent = 'Login';
-                loginBtn.onclick = showLoginModal; // Add click handler directly
-                logoutBtn.parentNode.replaceChild(loginBtn, logoutBtn);
+                const newLoginBtn = document.createElement('button');
+                const newRegisterBtn = document.createElement('button');
+
+                newRegisterBtn.id = 'registerBtn';
+                newRegisterBtn.className = 'btn btn-outline-primary';
+                newRegisterBtn.textContent = 'Register';
+                newRegisterBtn.onclick = showRegisterModal;
+
+                newLoginBtn.id = 'loginBtn';
+                newLoginBtn.className = 'btn btn-primary';
+                newLoginBtn.textContent = 'Login';
+                newLoginBtn.onclick = showLoginModal;
+
+                const parent = logoutBtn.parentNode;
+                parent.insertBefore(newRegisterBtn, logoutBtn);
+                parent.replaceChild(newLoginBtn, logoutBtn);
             }
         }
         resetBoardState();
     };
 
     /**
+     * Shows registration modal
+     */
+    const showRegisterModal = () => {
+        state.modal.showModal({
+            title: 'Register New User',
+            content: `
+            <div class="form-group">
+                <label for="registerName">Full Name</label>
+                <input type="text" id="registerName" class="form-control" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label for="registerEmail">Email</label>
+                <input type="email" id="registerEmail" class="form-control" placeholder="john@example.com">
+            </div>
+            <div class="form-group">
+                <label for="registerPassword">Password</label>
+                <input type="password" id="registerPassword" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" class="form-control">
+            </div>
+            <div class="error-message" id="registerError"></div>
+        `,
+            buttons: {
+                'Register': () => {
+                    const name = document.getElementById('registerName').value.trim();
+                    const email = document.getElementById('registerEmail').value.trim();
+                    const password = document.getElementById('registerPassword').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    const errorDiv = document.getElementById('registerError');
+
+                    // Validation
+                    if (!name || !email || !password) {
+                        errorDiv.textContent = 'All fields are required';
+                        return false;
+                    }
+
+                    if (password !== confirmPassword) {
+                        errorDiv.textContent = 'Passwords do not match';
+                        return false;
+                    }
+
+                    try {
+                        state.userService.createUser({ name, email, password });
+                        // Auto login after registration
+                        state.userService.login(email, password);
+                        updateUserUI();
+                        return true;
+                    } catch (error) {
+                        errorDiv.textContent = error.message;
+                        return false;
+                    }
+                },
+                'Cancel': () => {}
+            }
+        });
+    };
+
+    /**
      * Sets up user interface
      */
     const setupUserUI = () => {
-        // Only set up initial login button click handler
         const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+
         if (loginBtn) {
             loginBtn.addEventListener('click', showLoginModal);
         }
 
-        // Initial UI update
+        if (registerBtn) {
+            registerBtn.addEventListener('click', showRegisterModal);
+        }
+
         updateUserUI();
     };
 

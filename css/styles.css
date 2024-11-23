@@ -134,3 +134,17 @@ body {
     font-size: 0.875rem;
     margin-top: 0.5rem;
 }
+
+/* Registration Styles */
+
+.btn-outline-primary {
+    color: #007bff;
+    border: 1px solid #007bff;
+    background: transparent;
+    margin-right: 0.5rem;
+}
+
+.btn-outline-primary:hover {
+    color: white;
+    background: #007bff;
+}
