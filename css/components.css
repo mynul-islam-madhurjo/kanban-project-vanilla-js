@@ -47,8 +47,9 @@
 
 /* Style the editor container */
 .task-editor {
-    height: 200px;          /* Fixed height for editor */
-    margin-bottom: 1rem;    /* Space below editor */
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
 /* Style Quill's toolbar */
@@ -90,4 +91,54 @@
 /* Space between form groups */
 .form-group + .form-group {
     margin-top: 1rem;
+}
+
+/*User Profile and Assignment Styles*/
+.task-assigned-to {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #eee;
+}
+
+.task-metadata {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 1rem;
+    font-style: italic;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+
+.current-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem;
+    background: #e3f2fd;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.form-control select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
 }

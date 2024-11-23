@@ -43,36 +43,32 @@ export const setupModal = () => {
         Object.entries(buttons).forEach(([label, callback]) => {
             const button = document.createElement('button');
             button.className = 'btn';
-            // Add primary style to first button
             if (label === Object.keys(buttons)[0]) {
                 button.classList.add('btn-primary');
             }
             button.textContent = label;
-            button.addEventListener('click', () => {
-                if (callback) callback();
-                closeModal(modal);
+            button.addEventListener('click', async () => {
+                const result = await callback();
+                if (result !== false) {
+                    closeModal(modal);
+                }
             });
             modalFooter.appendChild(button);
         });
 
-        // Close button functionality
         const closeBtn = modalContent.querySelector('.close-modal');
         closeBtn.addEventListener('click', () => closeModal(modal));
 
         modal.appendChild(modalContent);
 
-        // Call onShow callback after a short delay to ensure DOM is ready
+        // Store callback to call after modal is shown
         if (onShow) {
-            setTimeout(() => onShow(modal), 0);
+            modal.onShowCallback = onShow;
         }
 
         return modal;
     };
 
-    /**
-     * Shows a modal dialog
-     * @param {Object} modalConfig - Modal configuration
-     */
     const showModal = (modalConfig) => {
         if (activeModal) {
             closeModal(activeModal);
@@ -82,19 +78,21 @@ export const setupModal = () => {
         document.body.appendChild(modal);
         activeModal = modal;
 
-        // Animation frame for smooth transition
+        // Call onShow callback after modal is in DOM
+        if (modal.onShowCallback) {
+            setTimeout(() => modal.onShowCallback(modal), 0);
+        }
+
         requestAnimationFrame(() => {
             modal.classList.add('show');
         });
 
-        // Close on outside click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 closeModal(modal);
             }
         });
 
-        // Add keyboard support (ESC to close)
         const handleKeyPress = (e) => {
             if (e.key === 'Escape') {
                 closeModal(modal);
@@ -102,26 +100,13 @@ export const setupModal = () => {
         };
         document.addEventListener('keydown', handleKeyPress);
 
-        // Clean up event listener when modal closes
         modal.addEventListener('close', () => {
             document.removeEventListener('keydown', handleKeyPress);
         });
     };
 
-    /**
-     * Closes the modal dialog
-     * @param {HTMLElement} modal - Modal element to close
-     */
     const closeModal = (modal) => {
-        // Get Quill instance if it exists
-        const quillEditor = modal.querySelector('.ql-editor');
-        if (quillEditor) {
-            // Clean up Quill instance to prevent memory leaks
-            const quill = modal.quill;
-            if (quill) {
-                quill = null;
-            }
-        }
+        if (!modal) return;
 
         modal.classList.remove('show');
         setTimeout(() => {
@@ -133,6 +118,7 @@ export const setupModal = () => {
     };
 
     return {
-        showModal
+        showModal,
+        closeModal
     };
 };
