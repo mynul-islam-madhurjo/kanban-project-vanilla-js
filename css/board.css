@@ -9,6 +9,7 @@
     display: flex;
     gap: 1rem;
     min-height: calc(100vh - 150px);
+    padding-bottom: 1rem;
 }
 
 .column {
@@ -18,10 +19,16 @@
     max-width: 300px;
     height: fit-content;
     box-shadow: var(--shadow);
+    margin: 0 0.5rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .column-header {
+    cursor: move;
     padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px 4px 0 0;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
@@ -36,6 +43,9 @@
 .column-content {
     padding: 1rem;
     min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .task-card {
@@ -44,10 +54,8 @@
     border-radius: 4px;
     padding: 1rem;
     margin-bottom: 0.5rem;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-}
-
-.task-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    cursor: move;
+    user-select: none;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
 }

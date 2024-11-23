@@ -1,95 +1,122 @@
 /**
  * Creates a new column element with all necessary functionality
  * @param {Object} config - Column configuration object
- * @param {string} config.title - Column title
- * @param {Array} config.tasks - Initial tasks
- * @param {Function} config.onDelete - Callback for deletion
- * @param {Function} config.onUpdate - Callback for updates
- * @returns {HTMLElement} The created column element
  */
-export const createColumn = ({ title, tasks = [], onDelete, onUpdate }) => {
+export const createColumn = ({ title, tasks = [], onDelete, onUpdate, modal }) => {
     /**
      * Creates HTML for a task card
      * @param {Object} task - Task data
-     * @returns {string} HTML string for the task card
      */
     const createTaskCard = (task) => {
-        return `
-            <div class="task-card" data-task-id="${task.id}">
-                <div class="task-title">${task.title}</div>
-            </div>
+        const taskElement = document.createElement('div');
+        taskElement.className = 'task-card';
+        taskElement.draggable = true;
+        taskElement.dataset.taskId = task.id;
+        taskElement.innerHTML = `
+            <div class="task-title">${task.title}</div>
         `;
+        return taskElement;
     };
 
     /**
      * Handles adding a new task to the column
-     * @param {HTMLElement} columnElement - The column DOM element
      */
     const addTask = (columnElement) => {
-        const taskTitle = prompt('Enter task title:');
-        if (taskTitle) {
-            const task = {
-                id: Date.now(),
-                title: taskTitle,
-                description: ''
-            };
+        modal.showModal({
+            title: 'Add New Task',
+            content: `
+                <div class="form-group">
+                    <label for="taskTitle">Task Title</label>
+                    <input type="text" id="taskTitle" class="form-control">
+                </div>
+            `,
+            buttons: {
+                'Add': () => {
+                    const taskTitle = document.getElementById('taskTitle').value.trim();
+                    if (taskTitle) {
+                        const task = {
+                            id: Date.now().toString(),
+                            title: taskTitle,
+                            description: ''
+                        };
 
-            const taskElement = createTaskCard(task);
-            const columnContent = columnElement.querySelector('.column-content');
-            columnContent.insertAdjacentHTML('beforeend', taskElement);
-            tasks.push(task);
-            onUpdate();
-        }
-    };
-
-    /**
-     * Handles column deletion with confirmation
-     * @param {HTMLElement} columnElement - The column to delete
-     */
-    const deleteColumn = (columnElement) => {
-        if (confirm('Are you sure you want to delete this column?')) {
-            columnElement.remove();
-            onDelete();
-        }
-    };
-
-    /**
-     * Updates column title and triggers update callback
-     * @param {string} newTitle - New title for the column
-     */
-    const updateTitle = (newTitle) => {
-        title = newTitle;
-        onUpdate();
-    };
-
-    /**
-     * Sets up all event listeners for the column
-     * @param {HTMLElement} columnElement - The column DOM element
-     */
-    const setupColumnEventListeners = (columnElement) => {
-        const deleteBtn = columnElement.querySelector('.delete-column');
-        const addTaskBtn = columnElement.querySelector('.add-task');
-        const titleElement = columnElement.querySelector('.column-title');
-
-        deleteBtn.addEventListener('click', () => deleteColumn(columnElement));
-        addTaskBtn.addEventListener('click', () => addTask(columnElement));
-        titleElement.addEventListener('blur', (e) => updateTitle(e.target.textContent));
+                        const taskElement = createTaskCard(task);
+                        const columnContent = columnElement.querySelector('.column-content');
+                        columnContent.insertBefore(taskElement, columnContent.lastElementChild);
+                        tasks.push(task);
+                        onUpdate();
+                    }
+                },
+                'Cancel': () => {}
+            }
+        });
     };
 
     // Create the column DOM structure
     const column = document.createElement('div');
     column.className = 'column';
-    column.innerHTML = `
-        <div class="column-header">
-            <div class="column-title" contenteditable="true">${title}</div>
-            <button class="btn delete-column">×</button>
-        </div>
-        <div class="column-content">
-            ${tasks.map(task => createTaskCard(task)).join('')}
-            <button class="btn btn-primary add-task">Add Task</button>
-        </div>
+    column.draggable = true;
+
+    // Create column header
+    const header = document.createElement('div');
+    header.className = 'column-header';
+    header.innerHTML = `
+        <div class="column-title" contenteditable="true">${title}</div>
+        <button class="btn delete-column">×</button>
     `;
 
-    setupColumnEventListeners(column);
+    // Create column content
+    const content = document.createElement('div');
+    content.className = 'column-content';
+
+    // Add existing tasks
+    tasks.forEach(task => {
+        content.appendChild(createTaskCard(task));
+    });
+
+    // Add "Add Task" button
+    const addTaskBtn = document.createElement('button');
+    addTaskBtn.className = 'btn btn-primary add-task';
+    addTaskBtn.textContent = 'Add Task';
+    content.appendChild(addTaskBtn);
+
+    // Append header and content to column
+    column.appendChild(header);
+    column.appendChild(content);
+
+    // Setup event listeners
+    const setupColumnEventListeners = () => {
+        const deleteBtn = column.querySelector('.delete-column');
+        const addTaskBtn = column.querySelector('.add-task');
+        const titleElement = column.querySelector('.column-title');
+
+        deleteBtn.addEventListener('click', () => {
+            modal.showModal({
+                title: 'Delete Column',
+                content: 'Are you sure you want to delete this column?',
+                buttons: {
+                    'Delete': () => {
+                        column.remove();
+                        onDelete();
+                    },
+                    'Cancel': () => {}
+                }
+            });
+        });
+
+        addTaskBtn.addEventListener('click', () => addTask(column));
+
+        titleElement.addEventListener('blur', (e) => {
+            const newTitle = e.target.textContent.trim();
+            if (newTitle) {
+                title = newTitle;
+                onUpdate();
+            } else {
+                e.target.textContent = title;
+            }
+        });
+    };
+
+    setupColumnEventListeners();
     return column;
 };

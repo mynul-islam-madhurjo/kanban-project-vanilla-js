@@ -1,5 +1,7 @@
 import { createColumn } from './components/Column.js';
 import { setupStorage } from './services/StorageService.js';
+import { setupDragAndDrop } from './services/DragDropService.js';
+import { setupModal } from './services/ModalService.js';
 
 /**
  * Initializes the Kanban board application
@@ -11,22 +13,58 @@ const initializeBoard = () => {
     const state = {
         boardColumns: document.getElementById('boardColumns'),
         addColumnBtn: document.getElementById('addColumnBtn'),
-        storage: setupStorage()
+        storage: setupStorage(),
+        modal: setupModal()
     };
+
+    // Initialize drag and drop
+    const dragDrop = setupDragAndDrop({
+        onDragComplete: (element, oldColumn, newColumn) => {
+            // Save board state after drag and drop
+            state.storage.saveBoard();
+        }
+    });
+
+    // Initialize drag and drop after DOM is ready
+    dragDrop.initialize(state.boardColumns);
 
     /**
      * Creates and adds a new column to the board
-     * @param {string} title - Column title (defaults to 'New Column')
-     * @param {Array} tasks - Initial tasks for the column
+     * @param {string} title - Column title
      */
-    const addColumn = (title = 'New Column', tasks = []) => {
+    const addColumn = (title = null) => {
+        if (!title) {
+            // Show modal for column creation
+            state.modal.showModal({
+                title: 'Create New Column',
+                content: `
+                    <div class="form-group">
+                        <label for="columnTitle">Column Title</label>
+                        <input type="text" id="columnTitle" class="form-control">
+                    </div>
+                `,
+                buttons: {
+                    'Create': () => {
+                        const titleInput = document.getElementById('columnTitle');
+                        if (titleInput.value.trim()) {
+                            createNewColumn(titleInput.value.trim());
+                        }
+                    },
+                    'Cancel': () => {}
+                }
+            });
+        } else {
+            createNewColumn(title);
+        }
+    };
+
+    const createNewColumn = (title, tasks = []) => {
         const column = createColumn({
             title,
             tasks,
-            // Callback when column is deleted
             onDelete: () => state.storage.saveBoard(),
-            // Callback when column or its tasks are updated
-            onUpdate: () => state.storage.saveBoard()
+            onUpdate: () => state.storage.saveBoard(),
+            modal: state.modal
         });
         state.boardColumns.appendChild(column);
         state.storage.saveBoard();

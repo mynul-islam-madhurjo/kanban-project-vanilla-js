@@ -1,0 +1,46 @@
+.task-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    cursor: move;
+    user-select: none;
+}
+
+.task-card.dragging {
+    opacity: 0.5;
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.task-card:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.column.dragging {
+    opacity: 0.5;
+    cursor: move;
+}
+
+.column.drag-over {
+    border: 2px dashed var(--primary-color);
+}
+
+/* Button Styles */
+.delete-column {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+}
+
+.delete-column:hover {
+    color: #666;
+}
+
+.add-task {
+    margin-top: 0.5rem;
+}
